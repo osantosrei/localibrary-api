@@ -27,9 +27,8 @@ public class EnderecoService {
     @Autowired
     private EnderecoRepository enderecoRepository;
 
-    // TODO Sprint 3: Injetar GeolocationService quando implementado
-    // @Autowired
-    // private GeolocationService geolocationService;
+    @Autowired
+    private GeolocationService geolocationService;
 
     /**
      * Cria entidade Endereco a partir do DTO.

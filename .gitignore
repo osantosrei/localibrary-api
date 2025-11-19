@@ -56,9 +56,9 @@ logs/
 # ===================================
 # ARQUIVOS SENSÍVEIS (NÃO COMMITAR!)
 # ===================================
-application.properties
 *.env
 .env
+.env.*
 
 # ===================================
 # UPLOADS (Fotos de bibliotecas)

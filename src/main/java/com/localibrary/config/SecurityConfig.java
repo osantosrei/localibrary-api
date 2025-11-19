@@ -84,6 +84,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/bibliotecas/{id_biblioteca}/livros/{id_livro}").hasRole("BIBLIOTECA") // RF-12
                         .requestMatchers(HttpMethod.PATCH, "/bibliotecas/{id_biblioteca}/livros/{id_livro}").hasRole("BIBLIOTECA") // Opcional
 
+                        // Permitir ver as imagens (público)
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                        // Permitir fazer upload (apenas autenticado)
+                        .requestMatchers(HttpMethod.POST, "/uploads").authenticated()
+
                         // Rotas de Admin (ROLE_ADMIN, ROLE_MODERADOR)
                         // (Serão implementadas nas Sprints 2 e 5)
                         .requestMatchers("/admin/moderadores/**").hasRole("ADMIN") // RF-22 a RF-25

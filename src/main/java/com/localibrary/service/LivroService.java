@@ -4,15 +4,20 @@ import com.localibrary.dto.BibliotecaParaLivroDTO;
 import com.localibrary.dto.LivroDetalhesDTO;
 import com.localibrary.dto.response.LivroResponseDTO;
 import com.localibrary.entity.Biblioteca;
+import com.localibrary.entity.BibliotecaLivro;
 import com.localibrary.entity.LivroBase;
+import com.localibrary.enums.StatusBiblioteca;
+import com.localibrary.repository.BibliotecaLivroRepository;
 import com.localibrary.repository.BibliotecaRepository;
 import com.localibrary.repository.LivroBaseRepository;
+import com.localibrary.util.DistanceCalculator;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +29,38 @@ public class LivroService {
 
     @Autowired
     private BibliotecaRepository bibliotecaRepository; // ⬅️ Nova dependência (para RF-06)
+
+    @Autowired
+    private BibliotecaLivroRepository bibliotecaLivroRepository;
+
+    /**
+     * RF-06 e RN-10: Listar bibliotecas, ordenando por proximidade se o usuário informar localização.
+     */
+    public List<BibliotecaParaLivroDTO> buscarBibliotecasPorLivro(Long idLivro, Double userLat, Double userLon) {
+        List<BibliotecaLivro> relacoes = bibliotecaLivroRepository.findByLivroBase_Id(idLivro);
+
+        List<BibliotecaParaLivroDTO> dtos = relacoes.stream()
+                .filter(rel -> rel.getBiblioteca().getStatus() == StatusBiblioteca.ATIVO)
+                .map(rel -> new BibliotecaParaLivroDTO(rel.getBiblioteca())) // Removemos quantidade do DTO anterior, lembra?
+                .collect(Collectors.toList());
+
+        // LÓGICA DE ORDENAÇÃO (RN-10)
+        if (userLat != null && userLon != null) {
+            // Se o usuário enviou coordenadas, ordena do mais perto para o mais longe
+            dtos.sort(Comparator.comparingDouble(dto ->
+                    DistanceCalculator.calculateDistance(
+                            userLat, userLon,
+                            dto.getLatitude().doubleValue(),
+                            dto.getLongitude().doubleValue()
+                    )
+            ));
+
+            // Opcional: Calcular e setar a distância no DTO para mostrar "A 2.5km de você"
+            // (Precisaria adicionar o campo 'distancia' no BibliotecaParaLivroDTO)
+        }
+
+        return dtos;
+    }
 
     /**
      * RF-02: Buscar livros por título

@@ -1,6 +1,6 @@
 package com.localibrary.service;
 
-import com.localibrary.dto.google.GoogleGeocodingResponse;
+import com.localibrary.dto.response.GoogleGeocodingResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;

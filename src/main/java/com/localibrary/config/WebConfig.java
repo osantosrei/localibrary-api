@@ -11,7 +11,7 @@ import java.nio.file.Paths;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${app.upload.dir}")
+    @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
     @Override
@@ -19,7 +19,8 @@ public class WebConfig implements WebMvcConfigurer {
         Path uploadPath = Paths.get(uploadDir);
         String uploadAbsolutePath = uploadPath.toFile().getAbsolutePath();
 
-        // Mapeia a URL /uploads/** para a pasta física
+        // Mapeia a URL http://localhost:8080/uploads/**
+        // Para a pasta física /app/uploads/
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:" + uploadAbsolutePath + "/");
     }

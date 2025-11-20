@@ -6,7 +6,9 @@ import com.localibrary.dto.response.BibliotecaResponseDTO;
 import com.localibrary.entity.*;
 import com.localibrary.enums.StatusBiblioteca;
 import com.localibrary.repository.*;
+import com.localibrary.util.Constants;
 import com.localibrary.util.SecurityUtil;
+import com.localibrary.util.ValidationUtil;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -96,6 +98,10 @@ public class BibliotecaService {
 
         Biblioteca biblioteca = findBibliotecaById(idBiblioteca);
 
+        if (!ValidationUtil.isValidCEP(dto.getCep())) {
+            throw new IllegalArgumentException(Constants.MSG_CEP_INVALIDO);
+        }
+
         // 1. Atualiza dados da Biblioteca
         biblioteca.setNomeFantasia(dto.getNomeFantasia());
         biblioteca.setRazaoSocial(dto.getRazaoSocial());
@@ -150,6 +156,11 @@ public class BibliotecaService {
         securityUtil.checkHasPermission(idBiblioteca);
 
         Biblioteca biblioteca = findBibliotecaById(idBiblioteca);
+
+        // Validação Customizada de Ano (que @Min/@Max não pegam dinamicamente)
+        if (dto.getAnoPublicacao() != null && !ValidationUtil.isValidAnoPublicacao(dto.getAnoPublicacao())) {
+            throw new IllegalArgumentException("Ano de publicação inválido ou no futuro.");
+        }
 
         // 1. Encontra ou Cria o LivroBase
         LivroBase livroBase = livroBaseRepository.findByIsbn(dto.getIsbn())

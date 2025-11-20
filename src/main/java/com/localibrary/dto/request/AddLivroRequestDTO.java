@@ -1,18 +1,17 @@
 package com.localibrary.dto.request;
 
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import java.util.Set;
+
+import static com.localibrary.util.Constants.MSG_ISBN_INVALIDO;
+import static com.localibrary.util.Constants.REGEX_ISBN;
 
 @Data
 public class AddLivroRequestDTO {
 
-    // Parte 1: Dados do Livro (tbl_livro_base)
-    @NotBlank
-    private String isbn; // O Service vai checar se já existe
+    @Pattern(regexp = REGEX_ISBN, message = MSG_ISBN_INVALIDO)
+    private String isbn;
 
     @NotBlank
     private String titulo;

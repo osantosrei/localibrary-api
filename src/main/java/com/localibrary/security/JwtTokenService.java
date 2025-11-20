@@ -14,6 +14,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.stream.Collectors;
 
+import static com.localibrary.util.Constants.JWT_CLAIM_ID;
+import static com.localibrary.util.Constants.JWT_CLAIM_ROLE;
+
 @Service
 public class JwtTokenService {
 
@@ -43,9 +46,9 @@ public class JwtTokenService {
 
         // Adiciona claims personalizados: id, email e roles
         return Jwts.builder()
-                .setSubject(userPrincipal.getUsername()) // username (email)
-                .claim("id", userPrincipal.getId()) // ID (seja da biblioteca ou admin)
-                .claim("roles", roles) // Roles
+                .setSubject(userPrincipal.getUsername())
+                .claim(JWT_CLAIM_ID, userPrincipal.getId())     // Usa constante "id"
+                .claim(JWT_CLAIM_ROLE, roles)                   // Usa constante "role"
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)

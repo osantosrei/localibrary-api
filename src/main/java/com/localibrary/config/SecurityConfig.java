@@ -84,10 +84,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/bibliotecas/{id_biblioteca}/livros/{id_livro}").hasRole("BIBLIOTECA") // RF-12
                         .requestMatchers(HttpMethod.PATCH, "/bibliotecas/{id_biblioteca}/livros/{id_livro}").hasRole("BIBLIOTECA") // Opcional
 
-                        // Permitir ver as imagens (público)
+                        // 1. GET em uploads é PÚBLICO (para carregar imagens no front)
+                        // Isso permite acessar /uploads/capas/xyz.jpg, /uploads/autores/abc.jpg
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
-                        // Permitir fazer upload (apenas autenticado)
-                        .requestMatchers(HttpMethod.POST, "/uploads").authenticated()
+
+                        // 2. POST em uploads exige AUTENTICAÇÃO (Admin ou Biblioteca)
+                        .requestMatchers(HttpMethod.POST, "/uploads/**").authenticated()
 
                         // Rotas de Admin (ROLE_ADMIN, ROLE_MODERADOR)
                         // (Serão implementadas nas Sprints 2 e 5)

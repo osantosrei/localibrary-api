@@ -1,4 +1,4 @@
-package com.localibrary.dto.google;
+package com.localibrary.dto.response;
 
 import lombok.Data;
 import java.util.List;

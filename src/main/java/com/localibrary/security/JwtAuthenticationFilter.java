@@ -19,6 +19,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.localibrary.util.Constants.JWT_HEADER;
+import static com.localibrary.util.Constants.JWT_PREFIX;
+
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -67,9 +70,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // Método helper para pegar o "Bearer <token>" do header
     private String getJwtFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+        String bearerToken = request.getHeader(JWT_HEADER); // "Authorization"
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(JWT_PREFIX)) { // "Bearer "
+            return bearerToken.substring(JWT_PREFIX.length());
         }
         return null;
     }

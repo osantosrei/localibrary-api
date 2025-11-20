@@ -1,12 +1,11 @@
 package com.localibrary.dto;
 
 import com.localibrary.enums.CategoriaBiblioteca;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import org.hibernate.validator.constraints.br.CNPJ;
+
+import static com.localibrary.util.Constants.*;
 
 @Data
 public class BibliotecaRegistrationDTO {
@@ -16,24 +15,24 @@ public class BibliotecaRegistrationDTO {
     private String nomeFantasia;
     @NotBlank
     private String razaoSocial;
-    @NotBlank
-    // @CNPJ(message = "CNPJ inválido")
+    @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
+    @Pattern(regexp = REGEX_CNPJ, message = MSG_CNPJ_INVALIDO)
     private String cnpj;
+    @Pattern(regexp = REGEX_TELEFONE, message = MSG_TELEFONE_INVALIDO)
     private String telefone;
     @NotNull
     private CategoriaBiblioteca categoria;
     private String site;
-
-    // Dados das Credenciais (tbl_credenciais_biblioteca)
-    @NotBlank
-    @Email
+    @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
+    @Pattern(regexp = REGEX_EMAIL, message = MSG_EMAIL_INVALIDO)
     private String email;
     @NotBlank
-    @Size(min = 6)
+    @Size(min = MIN_SENHA_LENGTH, max = MAX_SENHA_LENGTH, message = MSG_SENHA_CURTA)
     private String senha;
 
     // Dados do Endereço (tbl_endereco)
-    @NotBlank
+    @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
+    @Pattern(regexp = REGEX_CEP, message = MSG_CEP_INVALIDO)
     private String cep;
     @NotBlank
     private String logradouro;

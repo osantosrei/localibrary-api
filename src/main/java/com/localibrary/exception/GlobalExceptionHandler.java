@@ -1,6 +1,7 @@
 package com.localibrary.exception;
 
 import com.localibrary.dto.ApiErrorDTO;
+import com.localibrary.util.Constants;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -72,7 +73,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorDTO> handleAuthenticationException(AuthenticationException ex) {
         ApiErrorDTO error = new ApiErrorDTO(
                 HttpStatus.UNAUTHORIZED.value(),
-                "Falha na autenticação: Credenciais inválidas.",
+                Constants.MSG_NAO_AUTORIZADO, // "Acesso não autorizado"
                 null
         );
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);

@@ -42,4 +42,6 @@ public interface BibliotecaLivroRepository extends JpaRepository<BibliotecaLivro
      */
     @Query("SELECT SUM(bl.quantidade) FROM BibliotecaLivro bl")
     Long sumTotalExemplares();
+
+    List<BibliotecaLivro> findByLivroBase_Id(Long idLivro);
 }

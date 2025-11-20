@@ -36,8 +36,13 @@ public class LivroController {
     }
 
     // RF-06: Listar bibliotecas que possuem determinado livro
+// RF-06: Adicionamos parametros opcionais de lat/long
     @GetMapping("/{id_livro}/bibliotecas")
-    public ResponseEntity<List<BibliotecaParaLivroDTO>> verBibliotecasDoLivro(@PathVariable Long id_livro) {
-        return ResponseEntity.ok(livroService.buscarBibliotecasPorLivro(id_livro));
+    public ResponseEntity<List<BibliotecaParaLivroDTO>> verBibliotecasDoLivro(
+            @PathVariable Long id_livro,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lon
+    ) {
+        return ResponseEntity.ok(livroService.buscarBibliotecasPorLivro(id_livro, lat, lon));
     }
 }

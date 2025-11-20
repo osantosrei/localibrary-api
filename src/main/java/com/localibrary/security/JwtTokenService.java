@@ -1,9 +1,9 @@
 package com.localibrary.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -23,8 +23,10 @@ public class JwtTokenService {
     @Value("${app.jwt.secret}")
     private String jwtSecret;
 
+    private static final Logger logger = LoggerFactory.getLogger(JwtTokenService.class);
+
     // O token terá 24h de validade, conforme RNF-09 (configurável)
-    private final long jwtExpirationMs = 86400000; // 24 horas
+    private static long jwtExpirationMs = 86400000; // 24 horas
 
     // Chave secreta para assinar o token
     private SecretKey getSigningKey() {
@@ -69,9 +71,17 @@ public class JwtTokenService {
         try {
             Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
             return true;
-        } catch (Exception e) {
-            // Logar a exceção (JwtException, ExpiredJwtException, etc.)
-            return false;
+        } catch (SecurityException ex) {
+            logger.error("Assinatura JWT inválida: {}", ex.getMessage());
+        } catch (MalformedJwtException ex) {
+            logger.error("Token JWT inválido: {}", ex.getMessage());
+        } catch (ExpiredJwtException ex) {
+            logger.error("Token JWT expirado: {}", ex.getMessage());
+        } catch (UnsupportedJwtException ex) {
+            logger.error("Token JWT não suportado: {}", ex.getMessage());
+        } catch (IllegalArgumentException ex) {
+            logger.error("JWT claims string vazia: {}", ex.getMessage());
         }
+        return false;
     }
 }

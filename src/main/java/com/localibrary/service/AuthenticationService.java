@@ -11,88 +11,97 @@ import com.localibrary.repository.BibliotecaRepository;
 import com.localibrary.repository.CredencialBibliotecaRepository;
 import com.localibrary.repository.EnderecoRepository;
 import com.localibrary.security.JwtTokenService;
+import com.localibrary.util.Constants; // Import Constants
+import com.localibrary.util.ValidationUtil; // ⬅️ Import ValidationUtil
 import jakarta.persistence.EntityExistsException;
-import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 
 @Service
 public class AuthenticationService {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
 
-    @Autowired
-    private JwtTokenService jwtTokenService;
+    private final AuthenticationManager authenticationManager;
 
-    @Autowired
-    private BibliotecaRepository bibliotecaRepository;
+    private final JwtTokenService jwtTokenService;
 
-    @Autowired
-    private CredencialBibliotecaRepository credenciaisRepository;
+    private final BibliotecaRepository bibliotecaRepository;
 
-    @Autowired
-    private EnderecoRepository enderecoRepository;
+    private final CredencialBibliotecaRepository credenciaisRepository;
 
-    @Autowired
-    private GeolocationService geolocationService;
+    private final EnderecoRepository enderecoRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final GeolocationService geolocationService;
+
+    private final PasswordEncoder passwordEncoder;
+
+    public AuthenticationService(AuthenticationManager authenticationManager,
+                                 JwtTokenService jwtTokenService,
+                                 BibliotecaRepository bibliotecaRepository,
+                                 CredencialBibliotecaRepository credenciaisRepository,
+                                 EnderecoRepository enderecoRepository,
+                                 GeolocationService geolocationService,
+                                 PasswordEncoder passwordEncoder) {
+        this.authenticationManager = authenticationManager;
+        this.jwtTokenService = jwtTokenService;
+        this.bibliotecaRepository = bibliotecaRepository;
+        this.credenciaisRepository = credenciaisRepository;
+        this.enderecoRepository = enderecoRepository;
+        this.geolocationService = geolocationService;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public LoginResponseDTO login(LoginRequestDTO loginRequest) {
-        // Cria o objeto de autenticação
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getEmail(),
                         loginRequest.getSenha()
                 )
         );
-
-        // Seta a autenticação no contexto de segurança
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        // Gera o token JWT
         String token = jwtTokenService.generateToken(authentication);
-
-        return new LoginResponseDTO(token, "Bearer", 86400L); // 24h em segundos
+        return new LoginResponseDTO(token, "Bearer", 86400L);
     }
 
-    /**
-     * RF-08: Permitir o cadastro de uma nova biblioteca.
-     * Transacional para garantir que ou salva tudo, ou não salva nada.
-     */
     @Transactional
     public void registerBiblioteca(BibliotecaRegistrationDTO dto) {
-        // 1. Validar duplicidade
-        if (credenciaisRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new EntityExistsException("Este email já está em uso.");
+
+        validarCadastro(dto);
+
+        String emailLimpo = dto.getEmail().trim(); // Remove espaços extras
+        String cnpjLimpo = ValidationUtil.sanitizeCNPJ(dto.getCnpj()); // Remove pontuação
+        String telefoneLimpo = ValidationUtil.sanitizeTelefone(dto.getTelefone());
+        String cepLimpo = ValidationUtil.sanitizeCEP(dto.getCep());
+
+        // 3. Valida Duplicidade (Agora comparando Banana com Banana)
+        if (credenciaisRepository.findByEmail(emailLimpo).isPresent()) {
+            throw new EntityExistsException("Este email já está em uso: " + emailLimpo);
         }
-        if (bibliotecaRepository.findByCnpj(dto.getCnpj()).isPresent()) {
+
+        // AQUI ESTAVA O BUG: Antes buscávamos o CNPJ com ponto no banco sem ponto.
+        // Agora buscamos o CNPJ limpo.
+        if (bibliotecaRepository.findByCnpj(cnpjLimpo).isPresent()) {
             throw new EntityExistsException("Este CNPJ já está em uso.");
         }
 
-        // 2. Chamar API de Geolocalização (RN-17)
-        Optional<Coordinates> coordsOpt = geolocationService.getCoordinatesFromAddress(
-                dto.getCep(), dto.getLogradouro(), dto.getNumero(), dto.getCidade()
-        );
+        // 4. Geolocalização
+        Coordinates coords = geolocationService.getCoordinatesFromAddress(
+                        dto.getCep(), dto.getLogradouro(), dto.getNumero(), dto.getCidade())
+                .orElseThrow(() -> new IllegalArgumentException("Endereço inválido ou não encontrado."));
 
-        // 3. Validar retorno da API (RN-18)
-        if (coordsOpt.isEmpty()) {
-            throw new IllegalArgumentException("Endereço inválido ou não encontrado. Verifique os dados.");
+        if (!ValidationUtil.isValidCoordinates(coords.latitude().doubleValue(), coords.longitude().doubleValue())) {
+            throw new IllegalArgumentException("Coordenadas geográficas inválidas.");
         }
-        Coordinates coords = coordsOpt.get();
 
-        // 4. Salvar Endereço
+        // 5. Persistência (Usando as variáveis limpas)
         Endereco endereco = new Endereco();
-        endereco.setCep(dto.getCep());
+        endereco.setCep(cepLimpo); // Usa o limpo
         endereco.setLogradouro(dto.getLogradouro());
         endereco.setNumero(dto.getNumero());
         endereco.setComplemento(dto.getComplemento());
@@ -101,27 +110,47 @@ public class AuthenticationService {
         endereco.setEstado(dto.getEstado());
         endereco.setLatitude(coords.latitude());
         endereco.setLongitude(coords.longitude());
-        Endereco savedEndereco = enderecoRepository.save(endereco); // Precisamos do EnderecoRepository
+        Endereco savedEndereco = enderecoRepository.save(endereco);
 
-        // 5. Salvar Biblioteca
         Biblioteca biblioteca = new Biblioteca();
         biblioteca.setNomeFantasia(dto.getNomeFantasia());
         biblioteca.setRazaoSocial(dto.getRazaoSocial());
-        biblioteca.setCnpj(dto.getCnpj());
-        biblioteca.setTelefone(dto.getTelefone());
+        biblioteca.setCnpj(cnpjLimpo); // Usa o limpo
+        biblioteca.setTelefone(telefoneLimpo); // Usa o limpo
         biblioteca.setCategoria(dto.getCategoria());
         biblioteca.setSite(dto.getSite());
-        biblioteca.setStatus(StatusBiblioteca.PENDENTE); // Status Padrão (RN-02)
+        biblioteca.setStatus(StatusBiblioteca.PENDENTE);
         biblioteca.setEndereco(savedEndereco);
-        Biblioteca savedBiblioteca = bibliotecaRepository.save(biblioteca); // Precisamos do BibliotecaRepository
+        Biblioteca savedBiblioteca = bibliotecaRepository.save(biblioteca);
 
-        // 6. Salvar Credenciais
         CredencialBiblioteca credenciais = new CredencialBiblioteca();
-        credenciais.setEmail(dto.getEmail());
+        credenciais.setEmail(emailLimpo); // Usa o limpo
         credenciais.setSenha(passwordEncoder.encode(dto.getSenha()));
         credenciais.setBiblioteca(savedBiblioteca);
+
         savedBiblioteca.setCredencial(credenciais);
         credenciaisRepository.save(credenciais);
+    }
+
+    private void validarCadastro(BibliotecaRegistrationDTO dto) {
+
+        // Validações com ValidationUtil (Camada extra de segurança)
+        if (!ValidationUtil.isValidEmail(dto.getEmail())) {
+            throw new IllegalArgumentException(Constants.MSG_EMAIL_INVALIDO);
+        }
+        if (!ValidationUtil.isValidCNPJ(dto.getCnpj())) {
+            throw new IllegalArgumentException(Constants.MSG_CNPJ_INVALIDO);
+        }
+        if (!ValidationUtil.isValidCEP(dto.getCep())) {
+            throw new IllegalArgumentException(Constants.MSG_CEP_INVALIDO);
+        }
+        if (!ValidationUtil.isValidSenha(dto.getSenha())) {
+            throw new IllegalArgumentException(Constants.MSG_SENHA_CURTA);
+        }
+
+        if (ValidationUtil.isNotEmpty(dto.getTelefone()) && !ValidationUtil.isValidTelefone(dto.getTelefone())) {
+            throw new IllegalArgumentException(Constants.MSG_TELEFONE_INVALIDO);
+        }
     }
 
 }

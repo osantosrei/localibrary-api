@@ -1,6 +1,7 @@
 package com.localibrary.service;
 
 import com.localibrary.enums.TipoUpload;
+import com.localibrary.util.Constants;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ public class FileStorageService {
     private final Path rootLocation;
 
     // Injeta o diretório raiz (definido no application.properties)
-    public FileStorageService(@Value("${app.upload.dir:uploads}") String uploadDir) {
+    public FileStorageService(@Value("${app.upload.dir:" + Constants.UPLOAD_DIR + "}") String uploadDir) {
         this.rootLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
         initDirectories();
     }

@@ -19,13 +19,4 @@ public interface AdminRepository extends JpaRepository<Admin, Long> {
      */
     Optional<Admin> findByEmail(String email);
 
-    /**
-     * Verifica se email já está cadastrado
-     */
-    boolean existsByEmail(String email);
-
-    /**
-     * Lista moderadores (RF-22)
-     */
-    List<Admin> findByRoleAdmin(RoleAdmin roleAdmin);
 }

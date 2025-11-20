@@ -5,7 +5,6 @@ import com.localibrary.dto.request.AddLivroRequestDTO;
 import com.localibrary.dto.response.BibliotecaResponseDTO;
 import com.localibrary.service.BibliotecaService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +15,11 @@ import java.util.List;
 @RequestMapping("/bibliotecas")
 public class BibliotecaController {
 
-    @Autowired
-    private BibliotecaService bibliotecaService;
+    private final BibliotecaService bibliotecaService;
+
+    public BibliotecaController(BibliotecaService bibliotecaService) {
+        this.bibliotecaService = bibliotecaService;
+    }
 
     // RF-04: Exibir um mapa com todas as bibliotecas ATIVAS
     @GetMapping

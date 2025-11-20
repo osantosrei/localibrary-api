@@ -1,6 +1,7 @@
 package com.localibrary.service;
 
 import com.localibrary.dto.response.GoogleGeocodingResponse;
+import com.localibrary.util.Constants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -9,7 +10,8 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 // Record auxiliar para retorno interno
-record Coordinates(BigDecimal latitude, BigDecimal longitude) {}
+record Coordinates(BigDecimal latitude, BigDecimal longitude) {
+}
 
 @Service
 public class GeolocationService {
@@ -52,9 +54,15 @@ public class GeolocationService {
 
     // Mantemos o Mock como fallback se a API falhar ou não tiver chave
     private Optional<Coordinates> getMockCoordinates(String logradouro) {
-        if (logradouro.equalsIgnoreCase("Av. Paulista")) {
+        // Mock simples usando as constantes
+        if (logradouro != null && logradouro.contains("Paulista")) {
             return Optional.of(new Coordinates(new BigDecimal("-23.5614"), new BigDecimal("-46.6560")));
         }
-        return Optional.of(new Coordinates(new BigDecimal("-23.5505"), new BigDecimal("-46.6333")));
+
+        // Retorna o padrão (Centro de SP) definido nas constantes
+        return Optional.of(new Coordinates(
+                BigDecimal.valueOf(Constants.DEFAULT_LATITUDE),
+                BigDecimal.valueOf(Constants.DEFAULT_LONGITUDE)
+        ));
     }
 }

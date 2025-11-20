@@ -7,7 +7,6 @@ import com.localibrary.dto.response.AdminResponseDTO;
 import com.localibrary.enums.StatusBiblioteca;
 import com.localibrary.service.AdminService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +17,13 @@ import java.util.List;
 @RequestMapping("/admin") // ⬅️ Prefixo Geral (Correto para Sprint 5)
 public class AdminController {
 
-    @Autowired
-    private AdminService adminService;
+    private final AdminService adminService;
 
-    // ==========================================
+    public AdminController(AdminService adminService) {
+        this.adminService = adminService;
+    }
+
+// ==========================================
     // 🟢 MÉTODOS DA SPRINT 2 (MODERADORES)
     // ⚠️ Note que adicionamos "/moderadores" aqui!
     // ==========================================
@@ -45,7 +47,6 @@ public class AdminController {
     }
 
     // RF-24: Alterar Status de Moderador
-    // URL Final: PATCH /admin/moderadores/{id}
     @PatchMapping("/moderadores/{id}")
     public ResponseEntity<AdminResponseDTO> updateModeratorStatus(
             @PathVariable Long id,
@@ -56,7 +57,6 @@ public class AdminController {
     }
 
     // RF-25: Remover Moderador
-    // URL Final: DELETE /admin/moderadores/{id}
     @DeleteMapping("/moderadores/{id}")
     public ResponseEntity<Void> deleteModerator(@PathVariable Long id) {
         adminService.deleteModerator(id);
@@ -94,7 +94,6 @@ public class AdminController {
     }
 
     // RF-21: Excluir Biblioteca
-    // URL Final: DELETE /admin/bibliotecas/{id}
     @DeleteMapping("/bibliotecas/{id}")
     public ResponseEntity<Void> deleteBiblioteca(@PathVariable Long id) {
         adminService.deleteBiblioteca(id);

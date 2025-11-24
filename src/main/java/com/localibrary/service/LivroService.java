@@ -13,6 +13,8 @@ import com.localibrary.util.ValidationUtil;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -49,12 +51,22 @@ public class LivroService {
     // ================================================================================
 
     /**
-     * RF-02: Buscar livros por título (parcial, case-insensitive)
+     * RF-02: Buscar livros por título (parcial, case-insensitive) COM PAGINAÇÃO
      */
-    public List<LivroResponseDTO> buscarLivrosPorTitulo(String titulo) {
-        return livroRepository.searchByTitulo(titulo).stream()
+    public Page<LivroResponseDTO> buscarLivrosPorTitulo(String titulo, Integer page, Integer size, String sortField, String sortDir) {
+        int p = (page == null || page < 0) ? 0 : page;
+        int s = (size == null || size <= 0) ? Constants.DEFAULT_PAGE_SIZE : Math.min(size, Constants.MAX_PAGE_SIZE);
+        String sf = (sortField == null || sortField.isBlank()) ? Constants.DEFAULT_SORT_FIELD : sortField;
+        String sd = (sortDir == null || (!sortDir.equalsIgnoreCase("ASC") && !sortDir.equalsIgnoreCase("DESC"))) ? Constants.DEFAULT_SORT_DIRECTION : sortDir.toUpperCase();
+        org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.fromString(sd), sf);
+        Pageable pageable = PageRequest.of(p, s, sort);
+
+        Page<Livro> resultPage = livroRepository.searchByTitulo(titulo, pageable);
+        List<LivroResponseDTO> dtos = resultPage.getContent().stream()
                 .map(LivroResponseDTO::new)
                 .collect(Collectors.toList());
+
+        return new PageImpl<>(dtos, pageable, resultPage.getTotalElements());
     }
 
     /**
@@ -82,7 +94,7 @@ public class LivroService {
 
         // 3. Busca livros similares (mesmos gêneros) usando query otimizada
         Pageable limit = PageRequest.of(0, Constants.LIMITE_LIVROS_SIMILARES);
-        List<Livro> similares = livroRepository.findLivrosSimilares(id, limit);
+        List<Livro> similares = livroRepository.findLivrosSimilares(id, limit).getContent();
 
         detalhesDTO.setLivrosSimilares(similares);
 

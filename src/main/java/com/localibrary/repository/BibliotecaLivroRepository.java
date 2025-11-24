@@ -1,6 +1,8 @@
 package com.localibrary.repository;
 
 import com.localibrary.entity.BibliotecaLivro;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,6 +23,13 @@ public interface BibliotecaLivroRepository extends JpaRepository<BibliotecaLivro
     @Query("SELECT bl FROM BibliotecaLivro bl " +
             "WHERE bl.biblioteca.id = :idBiblioteca")
     List<BibliotecaLivro> findByBibliotecaId(@Param("idBiblioteca") Long idBiblioteca);
+
+    /**
+     * Versão paginada para a listagem de acervo
+     */
+    @Query("SELECT bl FROM BibliotecaLivro bl " +
+            "WHERE bl.biblioteca.id = :idBiblioteca")
+    Page<BibliotecaLivro> findByBibliotecaId(@Param("idBiblioteca") Long idBiblioteca, Pageable pageable);
 
     /**
      * Busca relacionamento específico entre biblioteca e livro

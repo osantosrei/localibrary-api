@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -67,11 +68,15 @@ public class AdminController {
 
     @Operation(summary = "Listar Bibliotecas (Visão Admin)", description = "Lista bibliotecas com dados sensíveis (CNPJ, Email). Permite filtrar por status.")
     @GetMapping("/bibliotecas")
-    public ResponseEntity<List<BibliotecaAdminDTO>> listBibliotecas(
+    public ResponseEntity<Page<BibliotecaAdminDTO>> listBibliotecas(
             @Parameter(description = "Filtro opcional: ATIVO, PENDENTE ou INATIVO")
-            @RequestParam(required = false) StatusBiblioteca status
+            @RequestParam(required = false) StatusBiblioteca status,
+            @Parameter(description = "Página (0-based)") @RequestParam(required = false) Integer page,
+            @Parameter(description = "Tamanho da página") @RequestParam(required = false) Integer size,
+            @Parameter(description = "Campo para ordenar (ex: nomeFantasia)") @RequestParam(required = false) String sortField,
+            @Parameter(description = "Direção da ordenação: ASC ou DESC") @RequestParam(required = false) String sortDir
     ) {
-        return ResponseEntity.ok(adminService.listBibliotecas(status));
+        return ResponseEntity.ok(adminService.listBibliotecas(status, page, size, sortField, sortDir));
     }
 
     @Operation(summary = "Moderar Biblioteca", description = "Aprova (ATIVO), Reprova (INATIVO) ou coloca em análise (PENDENTE).")

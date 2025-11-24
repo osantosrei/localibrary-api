@@ -72,12 +72,12 @@ public class AuthenticationService {
     @Transactional
     public void registerBiblioteca(BibliotecaRegistrationDTO dto) {
 
-        validarCadastro(dto);
-
         String emailLimpo = dto.getEmail().trim(); // Remove espaços extras
         String cnpjLimpo = ValidationUtil.sanitizeCNPJ(dto.getCnpj()); // Remove pontuação
         String telefoneLimpo = ValidationUtil.sanitizeTelefone(dto.getTelefone());
         String cepLimpo = ValidationUtil.sanitizeCEP(dto.getCep());
+
+        validarCadastro(dto);
 
         // 3. Valida Duplicidade (Agora comparando Banana com Banana)
         if (credenciaisRepository.findByEmail(emailLimpo).isPresent()) {
@@ -133,8 +133,6 @@ public class AuthenticationService {
     }
 
     private void validarCadastro(BibliotecaRegistrationDTO dto) {
-
-        // Validações com ValidationUtil (Camada extra de segurança)
         if (!ValidationUtil.isValidEmail(dto.getEmail())) {
             throw new IllegalArgumentException(Constants.MSG_EMAIL_INVALIDO);
         }
@@ -145,7 +143,7 @@ public class AuthenticationService {
             throw new IllegalArgumentException(Constants.MSG_CEP_INVALIDO);
         }
         if (!ValidationUtil.isValidSenha(dto.getSenha())) {
-            throw new IllegalArgumentException(Constants.MSG_SENHA_CURTA);
+            throw new IllegalArgumentException(Constants.MSG_SENHA_INVALIDA);
         }
 
         if (ValidationUtil.isNotEmpty(dto.getTelefone()) && !ValidationUtil.isValidTelefone(dto.getTelefone())) {

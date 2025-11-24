@@ -5,6 +5,7 @@ import com.localibrary.dto.request.AddLivroRequestDTO;
 import com.localibrary.dto.response.BibliotecaResponseDTO;
 import com.localibrary.service.BibliotecaService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -60,8 +61,14 @@ public class BibliotecaController {
 
     @Operation(summary = "Listar Meu Acervo", description = "Lista os livros da biblioteca logada.", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping("/{id_biblioteca}/livros")
-    public ResponseEntity<List<LivroAcervoDTO>> getMyLivros(@PathVariable Long id_biblioteca) {
-        List<LivroAcervoDTO> livros = bibliotecaService.listMyLivros(id_biblioteca);
+    public ResponseEntity<org.springframework.data.domain.Page<com.localibrary.dto.LivroAcervoDTO>> getMyLivros(
+            @PathVariable Long id_biblioteca,
+            @Parameter(description = "Página (0-based)") @RequestParam(required = false) Integer page,
+            @Parameter(description = "Tamanho da página") @RequestParam(required = false) Integer size,
+            @Parameter(description = "Campo para ordenar (ex: titulo)") @RequestParam(required = false) String sortField,
+            @Parameter(description = "Direção da ordenação: ASC ou DESC") @RequestParam(required = false) String sortDir
+    ) {
+        org.springframework.data.domain.Page<com.localibrary.dto.LivroAcervoDTO> livros = bibliotecaService.listMyLivros(id_biblioteca, page, size, sortField, sortDir);
         return ResponseEntity.ok(livros);
     }
 

@@ -1,13 +1,13 @@
 package com.localibrary.repository;
 
 import com.localibrary.entity.Livro;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -27,7 +27,7 @@ public interface LivroRepository extends JpaRepository<Livro, Long> {
      */
     @Query("SELECT l FROM Livro l " +
             "WHERE LOWER(l.titulo) LIKE LOWER(CONCAT('%', :titulo, '%'))")
-    List<Livro> searchByTitulo(@Param("titulo") String titulo);
+    Page<Livro> searchByTitulo(@Param("titulo") String titulo, Pageable pageable);
 
     /**
      * Busca livros mais populares (RF-03)
@@ -38,7 +38,7 @@ public interface LivroRepository extends JpaRepository<Livro, Long> {
             "WHERE bl.biblioteca.status = 'ATIVO' " +
             "GROUP BY bl.livro " +
             "ORDER BY SUM(bl.quantidade) DESC")
-    List<Livro> findLivrosPopulares(Pageable pageable);
+    Page<Livro> findLivrosPopulares(Pageable pageable);
 
     /**
      * Busca livros similares por gênero (para recomendações - RF-05)
@@ -48,7 +48,7 @@ public interface LivroRepository extends JpaRepository<Livro, Long> {
             "WHERE lg.genero.id IN " +
             "(SELECT lg2.genero.id FROM LivroGenero lg2 WHERE lg2.livro.id = :idLivro) " +
             "AND l.id != :idLivro")
-    List<Livro> findLivrosSimilares(@Param("idLivro") Long idLivro, Pageable pageable);
+    Page<Livro> findLivrosSimilares(@Param("idLivro") Long idLivro, Pageable pageable);
 
     /**
      * Verifica se ISBN já está cadastrado

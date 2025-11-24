@@ -2,6 +2,8 @@ package com.localibrary.repository;
 
 import com.localibrary.entity.Biblioteca;
 import com.localibrary.enums.StatusBiblioteca;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,6 +28,11 @@ public interface BibliotecaRepository extends JpaRepository<Biblioteca, Long> {
      * Busca bibliotecas por status
      */
     List<Biblioteca> findByStatus(StatusBiblioteca status);
+
+    /**
+     * Versão paginada para Admin
+     */
+    Page<Biblioteca> findByStatus(StatusBiblioteca status, Pageable pageable);
 
     /**
      * Contagens para o Dashboard

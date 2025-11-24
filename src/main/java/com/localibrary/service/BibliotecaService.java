@@ -13,6 +13,9 @@ import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -48,7 +51,7 @@ public class BibliotecaService {
 
     /**
      * RF-04: Exibir mapa com todas as bibliotecas ATIVAS em SP
-     * (Usando sua query 'findBibliotecasAtivasEmSaoPaulo')
+     * (Usando sua query 'findBibliotecasAtivas')
      */
     public List<BibliotecaResponseDTO> listarBibliotecasAtivas() {
         return bibliotecaRepository.findBibliotecasAtivasEmSaoPaulo().stream()
@@ -142,14 +145,20 @@ public class BibliotecaService {
     /**
      * RF-10: Listar todos os livros disponíveis em uma biblioteca específica
      */
-    public List<LivroAcervoDTO> listMyLivros(Long idBiblioteca) {
+    public Page<LivroAcervoDTO> listMyLivros(Long idBiblioteca, Integer page, Integer size, String sortField, String sortDir) {
         // RN-01: Verifica permissão
         securityUtil.checkHasPermission(idBiblioteca);
 
-        // Usa a query do repositório (findByBiblioteca_Id)
-        return bibliotecaLivroRepository.findByBibliotecaId(idBiblioteca).stream()
-                .map(LivroAcervoDTO::new)
-                .collect(Collectors.toList());
+        int p = (page == null || page < 0) ? 0 : page;
+        int s = (size == null || size <= 0) ? Constants.DEFAULT_PAGE_SIZE : Math.min(size, Constants.MAX_PAGE_SIZE);
+        String sf = (sortField == null || sortField.isBlank()) ? Constants.DEFAULT_SORT_FIELD : sortField;
+        String sd = (sortDir == null || (!sortDir.equalsIgnoreCase("ASC") && !sortDir.equalsIgnoreCase("DESC"))) ? Constants.DEFAULT_SORT_DIRECTION : sortDir.toUpperCase();
+        org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.fromString(sd), sf);
+        Pageable pageable = PageRequest.of(p, s, sort);
+
+        // Usa a query do repositório (findByBibliotecaId pageable)
+        return bibliotecaLivroRepository.findByBibliotecaId(idBiblioteca, pageable)
+                .map(LivroAcervoDTO::new);
     }
 
     /**

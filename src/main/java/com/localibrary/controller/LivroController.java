@@ -7,6 +7,7 @@ import com.localibrary.service.LivroService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,10 +26,15 @@ public class LivroController {
 
     @Operation(summary = "Buscar por Título", description = "Pesquisa livros por parte do título (busca textual).")
     @GetMapping
-    public ResponseEntity<List<LivroResponseDTO>> buscarLivros(
-            @Parameter(description = "Termo de busca") @RequestParam String titulo
+    public ResponseEntity<Page<LivroResponseDTO>> buscarLivros(
+            @Parameter(description = "Termo de busca") @RequestParam String titulo,
+            @Parameter(description = "Página (0-based)") @RequestParam(required = false) Integer page,
+            @Parameter(description = "Tamanho da página") @RequestParam(required = false) Integer size,
+            @Parameter(description = "Campo para ordenar (ex: titulo)") @RequestParam(required = false) String sortField,
+            @Parameter(description = "Direção da ordenação: ASC ou DESC") @RequestParam(required = false) String sortDir
     ) {
-        return ResponseEntity.ok(livroService.buscarLivrosPorTitulo(titulo));
+        Page<LivroResponseDTO> result = livroService.buscarLivrosPorTitulo(titulo, page, size, sortField, sortDir);
+        return ResponseEntity.ok(result);
     }
 
     @Operation(summary = "Livros Populares", description = "Retorna os Top 10 livros com maior disponibilidade no sistema.")

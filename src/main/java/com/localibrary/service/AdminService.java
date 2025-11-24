@@ -15,9 +15,14 @@ import com.localibrary.repository.AdminRepository;
 import com.localibrary.repository.BibliotecaLivroRepository;
 import com.localibrary.repository.BibliotecaRepository;
 import com.localibrary.repository.LivroRepository;
+import com.localibrary.util.Constants;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -62,19 +67,28 @@ public class AdminService {
     }
 
     /**
-     * RF-17, RF-19: Listar bibliotecas filtrando por status (opcional)
+     * RF-17, RF-19: Listar bibliotecas filtrando por status (opcional) COM PAGINAÇÃO
      */
-    public List<BibliotecaAdminDTO> listBibliotecas(StatusBiblioteca status) {
-        List<Biblioteca> libs;
+    public Page<BibliotecaAdminDTO> listBibliotecas(StatusBiblioteca status, Integer page, Integer size, String sortField, String sortDir) {
+        int p = (page == null || page < 0) ? 0 : page;
+        int s = (size == null || size <= 0) ? Constants.DEFAULT_PAGE_SIZE : Math.min(size, Constants.MAX_PAGE_SIZE);
+        String sf = (sortField == null || sortField.isBlank()) ? Constants.DEFAULT_SORT_FIELD : sortField;
+        String sd = (sortDir == null || (!sortDir.equalsIgnoreCase("ASC") && !sortDir.equalsIgnoreCase("DESC"))) ? Constants.DEFAULT_SORT_DIRECTION : sortDir.toUpperCase();
+        org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.fromString(sd), sf);
+        Pageable pageable = PageRequest.of(p, s, sort);
+
+        Page<Biblioteca> libsPage;
         if (status != null) {
-            libs = bibliotecaRepository.findByStatus(status);
+            libsPage = bibliotecaRepository.findByStatus(status, pageable);
         } else {
-            libs = bibliotecaRepository.findAll();
+            libsPage = bibliotecaRepository.findAll(pageable);
         }
 
-        return libs.stream()
+        List<BibliotecaAdminDTO> dtos = libsPage.getContent().stream()
                 .map(BibliotecaAdminDTO::new)
                 .collect(Collectors.toList());
+
+        return new PageImpl<>(dtos, pageable, libsPage.getTotalElements());
     }
 
     /**

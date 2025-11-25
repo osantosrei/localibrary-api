@@ -26,7 +26,7 @@ public class BibliotecaRegistrationDTO {
     @Pattern(regexp = REGEX_EMAIL, message = MSG_EMAIL_INVALIDO)
     private String email;
     @NotBlank
-    @Size(min = MIN_SENHA_LENGTH, max = MAX_SENHA_LENGTH, message = MSG_SENHA_CURTA)
+    @Size(min = MIN_SENHA_LENGTH, max = MAX_SENHA_LENGTH, message = MSG_SENHA_INVALIDA)
     private String senha;
 
     // Dados do Endereço (tbl_endereco)

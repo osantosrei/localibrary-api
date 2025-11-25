@@ -34,6 +34,7 @@ public class Constants {
     public static final String REGEX_CEP = "^\\d{5}-\\d{3}$";
     public static final String REGEX_TELEFONE = "^\\(?\\d{2}\\)?\\s?\\d{4,5}-?\\d{4}$";
     public static final String REGEX_ISBN = "^\\d{13}$";
+    public static final String REGEX_SENHA = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{" + MIN_SENHA_LENGTH + ",}$";
 
     // ============================================
     // MENSAGENS DE VALIDAÇÃO
@@ -43,7 +44,7 @@ public class Constants {
     public static final String MSG_CEP_INVALIDO = "CEP inválido (formato: 00000-000)";
     public static final String MSG_TELEFONE_INVALIDO = "Telefone inválido";
     public static final String MSG_ISBN_INVALIDO = "ISBN inválido (deve ter 13 dígitos)";
-    public static final String MSG_SENHA_CURTA = "Senha deve ter no mínimo " + MIN_SENHA_LENGTH + " caracteres";
+    public static final String MSG_SENHA_INVALIDA = "Senha deve ter mínimo " + MIN_SENHA_LENGTH + ", incluindo maiúscula, minúscula, número e símbolo especial";
     public static final String MSG_CAMPO_OBRIGATORIO = "Campo obrigatório";
 
     // ============================================

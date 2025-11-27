@@ -19,13 +19,25 @@ public class ValidationUtil {
     }
 
     /**
-     * Valida formato de CNPJ (com pontuação)
+     * ✅ CORREÇÃO: Valida CNPJ com OU sem formatação
+     * Antes: Validava apenas formato com pontuação
+     * Agora: Aceita ambos os formatos
      */
     public static boolean isValidCNPJ(String cnpj) {
         if (cnpj == null || cnpj.trim().isEmpty()) {
             return false;
         }
-        return Pattern.matches(Constants.REGEX_CNPJ, cnpj);
+
+        // Remove formatação para validar
+        String cnpjLimpo = sanitizeCNPJ(cnpj);
+
+        // Valida se tem 14 dígitos
+        if (cnpjLimpo.length() != 14) {
+            return false;
+        }
+
+        // Valida se todos são números
+        return cnpjLimpo.matches("\\d{14}");
     }
 
     /**
@@ -35,7 +47,10 @@ public class ValidationUtil {
         if (cep == null || cep.trim().isEmpty()) {
             return false;
         }
-        return Pattern.matches(Constants.REGEX_CEP, cep);
+
+        // Aceita com ou sem formatação
+        String cepLimpo = sanitizeCEP(cep);
+        return cepLimpo.matches("\\d{8}");
     }
 
     /**
@@ -45,7 +60,12 @@ public class ValidationUtil {
         if (telefone == null || telefone.trim().isEmpty()) {
             return false;
         }
-        return Pattern.matches(Constants.REGEX_TELEFONE, telefone);
+
+        // Remove formatação
+        String telefoneLimpo = sanitizeTelefone(telefone);
+
+        // Aceita 10 ou 11 dígitos (com ou sem DDD)
+        return telefoneLimpo.matches("\\d{10,11}");
     }
 
     /**
@@ -105,15 +125,22 @@ public class ValidationUtil {
      * Output: 12.345.678/0001-99
      */
     public static String formatCNPJ(String cnpj) {
-        if (cnpj == null || cnpj.length() != 14) {
+        if (cnpj == null) {
+            return null;
+        }
+
+        String cnpjLimpo = sanitizeCNPJ(cnpj);
+
+        if (cnpjLimpo.length() != 14) {
             return cnpj;
         }
+
         return String.format("%s.%s.%s/%s-%s",
-                cnpj.substring(0, 2),
-                cnpj.substring(2, 5),
-                cnpj.substring(5, 8),
-                cnpj.substring(8, 12),
-                cnpj.substring(12, 14)
+                cnpjLimpo.substring(0, 2),
+                cnpjLimpo.substring(2, 5),
+                cnpjLimpo.substring(5, 8),
+                cnpjLimpo.substring(8, 12),
+                cnpjLimpo.substring(12, 14)
         );
     }
 
@@ -123,12 +150,19 @@ public class ValidationUtil {
      * Output: 01310-100
      */
     public static String formatCEP(String cep) {
-        if (cep == null || cep.length() != 8) {
+        if (cep == null) {
+            return null;
+        }
+
+        String cepLimpo = sanitizeCEP(cep);
+
+        if (cepLimpo.length() != 8) {
             return cep;
         }
+
         return String.format("%s-%s",
-                cep.substring(0, 5),
-                cep.substring(5, 8)
+                cepLimpo.substring(0, 5),
+                cepLimpo.substring(5, 8)
         );
     }
 

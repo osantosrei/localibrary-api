@@ -16,7 +16,7 @@ services:
       - db-data:/var/lib/mysql
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,18 +29,18 @@ services:
       - "8080:8080"
     # Passa as variáveis do .env para dentro do container Java
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
+      DB_HOST: mysql-db
+      DB_PORT: 3306
       DB_NAME: ${MYSQL_DATABASE}
       DB_USER: ${MYSQL_USER}
       DB_PASS: ${MYSQL_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
     depends_on:
       mysql-db:
         condition: service_healthy
     volumes:
-      # Persistência de uploads (da Sprint 7)
       - ./uploads:/app/uploads
 
 volumes:

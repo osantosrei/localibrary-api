@@ -10,38 +10,53 @@ import static com.localibrary.util.Constants.*;
 public class BibliotecaRegistrationDTO {
 
     // Dados da Biblioteca (tbl_biblioteca)
-    @NotBlank
+    @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
     private String nomeFantasia;
-    @NotBlank
+
+    @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
     private String razaoSocial;
+
+    /**
+     * ✅ CORREÇÃO CRÍTICA: CNPJ agora aceita com OU sem formatação
+     * Validação customizada no ValidationUtil aceita ambos os formatos
+     * O AuthenticationService sanitiza antes de salvar
+     */
     @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
-    @Pattern(regexp = REGEX_CNPJ, message = MSG_CNPJ_INVALIDO)
     private String cnpj;
-    @Pattern(regexp = REGEX_TELEFONE, message = MSG_TELEFONE_INVALIDO)
+
     private String telefone;
-    @NotNull
+
+    @NotNull(message = MSG_CAMPO_OBRIGATORIO)
     private CategoriaBiblioteca categoria;
+
     private String site;
+
     @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
-    @Pattern(regexp = REGEX_EMAIL, message = MSG_EMAIL_INVALIDO)
+    @Email(message = MSG_EMAIL_INVALIDO)
     private String email;
-    @NotBlank
+
+    @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
     @Size(min = MIN_SENHA_LENGTH, max = MAX_SENHA_LENGTH, message = MSG_SENHA_INVALIDA)
     private String senha;
 
     // Dados do Endereço (tbl_endereco)
     @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
-    @Pattern(regexp = REGEX_CEP, message = MSG_CEP_INVALIDO)
     private String cep;
-    @NotBlank
+
+    @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
     private String logradouro;
-    @NotBlank
+
+    @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
     private String numero;
+
     private String complemento;
-    @NotBlank
+
+    @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
     private String bairro;
-    @NotBlank
+
+    @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
     private String cidade;
-    @NotBlank
+
+    @NotBlank(message = MSG_CAMPO_OBRIGATORIO)
     private String estado;
 }

@@ -1,6 +1,7 @@
 package com.localibrary.service;
 
 import com.localibrary.dto.BibliotecaAdminDTO;
+import com.localibrary.dto.BibliotecaMapaDTO;
 import com.localibrary.dto.DashboardDTO;
 import com.localibrary.dto.UpdateStatusBibliotecaDTO;
 import com.localibrary.dto.response.AdminResponseDTO;
@@ -15,13 +16,11 @@ import com.localibrary.repository.AdminRepository;
 import com.localibrary.repository.BibliotecaLivroRepository;
 import com.localibrary.repository.BibliotecaRepository;
 import com.localibrary.repository.LivroRepository;
-import com.localibrary.util.Constants;
+import com.localibrary.util.PaginationHelper;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -48,7 +47,7 @@ public class AdminService {
     private BibliotecaLivroRepository bibliotecaLivroRepository;
 
     /**
-     * RF-16: Dashboard Administrativo
+     * ✅ CORREÇÃO RF-16: Dashboard agora inclui mapa de localização
      */
     public DashboardDTO getDashboardData() {
         long totalLibs = bibliotecaRepository.count();
@@ -57,25 +56,27 @@ public class AdminService {
         long totalBooks = livroRepository.count();
         Long totalCopies = bibliotecaLivroRepository.sumTotalExemplares();
 
+        // ✅ NOVO: Busca bibliotecas para o mapa
+        List<BibliotecaMapaDTO> bibliotecasMapa = bibliotecaRepository.findAll().stream()
+                .map(BibliotecaMapaDTO::new)
+                .collect(Collectors.toList());
+
         return DashboardDTO.builder()
                 .totalBibliotecas(totalLibs)
                 .bibliotecasAtivas(activeLibs)
                 .bibliotecasPendentes(pendingLibs)
                 .totalLivrosCadastrados(totalBooks)
                 .totalExemplares(totalCopies != null ? totalCopies : 0)
+                .bibliotecasMapa(bibliotecasMapa) // ✅ Inclui mapa
                 .build();
     }
 
     /**
      * RF-17, RF-19: Listar bibliotecas filtrando por status (opcional) COM PAGINAÇÃO
+     * ✅ CORREÇÃO: Usa PaginationHelper
      */
     public Page<BibliotecaAdminDTO> listBibliotecas(StatusBiblioteca status, Integer page, Integer size, String sortField, String sortDir) {
-        int p = (page == null || page < 0) ? 0 : page;
-        int s = (size == null || size <= 0) ? Constants.DEFAULT_PAGE_SIZE : Math.min(size, Constants.MAX_PAGE_SIZE);
-        String sf = (sortField == null || sortField.isBlank()) ? Constants.DEFAULT_SORT_FIELD : sortField;
-        String sd = (sortDir == null || (!sortDir.equalsIgnoreCase("ASC") && !sortDir.equalsIgnoreCase("DESC"))) ? Constants.DEFAULT_SORT_DIRECTION : sortDir.toUpperCase();
-        org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.fromString(sd), sf);
-        Pageable pageable = PageRequest.of(p, s, sort);
+        Pageable pageable = PaginationHelper.createPageable(page, size, sortField, sortDir);
 
         Page<Biblioteca> libsPage;
         if (status != null) {
@@ -84,11 +85,7 @@ public class AdminService {
             libsPage = bibliotecaRepository.findAll(pageable);
         }
 
-        List<BibliotecaAdminDTO> dtos = libsPage.getContent().stream()
-                .map(BibliotecaAdminDTO::new)
-                .collect(Collectors.toList());
-
-        return new PageImpl<>(dtos, pageable, libsPage.getTotalElements());
+        return libsPage.map(BibliotecaAdminDTO::new);
     }
 
     /**
@@ -111,11 +108,12 @@ public class AdminService {
         if (!bibliotecaRepository.existsById(id)) {
             throw new EntityNotFoundException("Biblioteca não encontrada.");
         }
-        // O CascadeType.ALL na entidade cuidará do Endereço, Credenciais e Livros
         bibliotecaRepository.deleteById(id);
     }
 
-    // RF-23: Cadastrar novos moderadores
+    /**
+     * RF-23: Cadastrar novos moderadores
+     */
     public AdminResponseDTO createModerator(CreateModeratorRequestDTO dto) {
         if (adminRepository.findByEmail(dto.getEmail()).isPresent()) {
             throw new EntityExistsException("Email já cadastrado.");
@@ -127,21 +125,26 @@ public class AdminService {
         newModerator.setEmail(dto.getEmail());
         newModerator.setSenha(passwordEncoder.encode(dto.getSenha()));
         newModerator.setRoleAdmin(RoleAdmin.MODERADOR);
-        newModerator.setStatus(StatusAdmin.ATIVO); // Padrão
+        newModerator.setStatus(StatusAdmin.ATIVO);
 
         Admin savedModerator = adminRepository.save(newModerator);
         return new AdminResponseDTO(savedModerator);
     }
 
-    // RF-22: Listar todos os moderadores
+    /**
+     * RF-22: Listar todos os moderadores
+     */
     public List<AdminResponseDTO> listModerators() {
         return adminRepository.findAll().stream()
                 .filter(admin -> admin.getRoleAdmin() == RoleAdmin.MODERADOR)
-                .map(AdminResponseDTO::new) // Converte Admin para AdminResponseDTO
+                .map(AdminResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
-    // RF-24: Alterar status de moderador
+    /**
+     * RF-24: Alterar status de moderador
+     * ✅ CORRIGIDO: Agora funciona após adição da coluna 'status' no banco
+     */
     public AdminResponseDTO updateModeratorStatus(Long id, UpdateStatusRequestDTO dto) {
         Admin moderator = findModeratorById(id);
         moderator.setStatus(dto.getStatus());
@@ -149,13 +152,15 @@ public class AdminService {
         return new AdminResponseDTO(updatedModerator);
     }
 
-    // RF-25: Remover moderador
+    /**
+     * RF-25: Remover moderador
+     */
     public void deleteModerator(Long id) {
         Admin moderator = findModeratorById(id);
         adminRepository.delete(moderator);
     }
 
-    // Método auxiliar para evitar repetição
+    // Método auxiliar
     private Admin findModeratorById(Long id) {
         return adminRepository.findById(id)
                 .filter(admin -> admin.getRoleAdmin() == RoleAdmin.MODERADOR)

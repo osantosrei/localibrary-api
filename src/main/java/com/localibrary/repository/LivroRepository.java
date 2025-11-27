@@ -22,6 +22,16 @@ public interface LivroRepository extends JpaRepository<Livro, Long> {
     Optional<Livro> findByIsbn(String isbn);
 
     /**
+     * ✅ CORREÇÃO: Busca livro por ID com gêneros carregados (evita N+1)
+     * Resolve: Bug de performance em LivroDetalhesDTO
+     */
+    @Query("SELECT DISTINCT l FROM Livro l " +
+            "LEFT JOIN FETCH l.generos lg " +
+            "LEFT JOIN FETCH lg.genero " +
+            "WHERE l.id = :id")
+    Optional<Livro> findByIdWithGeneros(@Param("id") Long id);
+
+    /**
      * Busca livros por título (RF-02)
      * Busca parcial, insensível a maiúsculas/minúsculas
      */
@@ -30,14 +40,15 @@ public interface LivroRepository extends JpaRepository<Livro, Long> {
     Page<Livro> searchByTitulo(@Param("titulo") String titulo, Pageable pageable);
 
     /**
-     * Busca livros mais populares (RF-03)
-     * Livros com maior quantidade total cadastrada nas bibliotecas
+     * ✅ CORREÇÃO RF-03: Livros mais populares (baseado no NÚMERO DE BIBLIOTECAS)
+     * Antes: Ordenava por SUM(quantidade) - total de exemplares
+     * Agora: Ordena por COUNT(DISTINCT biblioteca) - número de bibliotecas diferentes
      */
     @Query("SELECT bl.livro " +
             "FROM BibliotecaLivro bl " +
             "WHERE bl.biblioteca.status = 'ATIVO' " +
             "GROUP BY bl.livro " +
-            "ORDER BY SUM(bl.quantidade) DESC")
+            "ORDER BY COUNT(DISTINCT bl.biblioteca.id) DESC")
     Page<Livro> findLivrosPopulares(Pageable pageable);
 
     /**

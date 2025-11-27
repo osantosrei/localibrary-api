@@ -1,6 +1,7 @@
 package com.localibrary.config;
 
 import com.localibrary.security.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -17,11 +18,17 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import java.util.Arrays;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    // ✅ CORREÇÃO CRÍTICA: CORS agora usa variável de ambiente
+    @Value("${app.cors.allowed-origins:http://localhost:3000}")
+    private String allowedOrigins;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
@@ -42,9 +49,14 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        // Em produção, troque "*" pelo domínio exato do seu frontend (ex: "http://meusite.com")
+        // ✅ CORREÇÃO CRÍTICA: Agora usa origens específicas da variável de ambiente
         config.setAllowCredentials(true);
-        config.addAllowedOriginPattern("*");
+
+        // Divide as origens por vírgula e adiciona cada uma
+        Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .forEach(config::addAllowedOrigin);
+
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
 
@@ -77,10 +89,6 @@ public class SecurityConfig {
 
                         // --- ROTAS DE BIBLIOTECA (ROLE_BIBLIOTECA) ---
                         .requestMatchers("/bibliotecas/{id_biblioteca}/**").hasRole("BIBLIOTECA")
-                        // Nota: O /** acima já cobre profile, livros, put, etc. se a URL base for a mesma.
-                        // Se quiser manter granular como você fez para segurança extra, mantenha sua lista:
-                        // .requestMatchers(HttpMethod.GET, "/bibliotecas/{id_biblioteca}/profile").hasRole("BIBLIOTECA")
-                        // ... etc ...
 
                         // --- ROTAS DE UPLOADS ---
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
@@ -89,17 +97,13 @@ public class SecurityConfig {
                         // --- ROTAS ADMINISTRATIVAS ---
 
                         // 1. Exclusões (Alto Risco - Apenas ADMIN)
-                        // RN-04 e RF-21 exigem controle estrito
                         .requestMatchers(HttpMethod.DELETE, "/admin/bibliotecas/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/admin/moderadores/{id}").hasRole("ADMIN")
 
                         // 2. Gestão de Moderadores (Apenas ADMIN)
-                        // ESTA REGRA DEVE VIR ANTES DO GENÉRICO /admin/**
-                        // Isso impede que Moderadores criem ou editem outros moderadores
                         .requestMatchers("/admin/moderadores/**").hasRole("ADMIN")
 
                         // 3. Dashboard e Gestão de Bibliotecas (ADMIN ou MODERADOR)
-                        // Isso cobre: GET /admin/dashboard, GET /admin/bibliotecas, PATCH status
                         .requestMatchers("/admin/**").hasAnyRole("ADMIN", "MODERADOR")
 
                         // --- CATCH-ALL ---

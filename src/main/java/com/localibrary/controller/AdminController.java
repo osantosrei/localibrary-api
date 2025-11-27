@@ -75,7 +75,7 @@ public class AdminController {
             description = "Ativa ou inativa um moderador. (Apenas ADMIN) - RF-24"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Status atualizado com sucesso"),
+            @ApiResponse(responseCode = "204", description = "Status atualizado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos"),
             @ApiResponse(responseCode = "401", description = "Token JWT ausente ou inválido"),
             @ApiResponse(responseCode = "403", description = "Apenas ADMIN pode alterar status"),
@@ -179,7 +179,7 @@ public class AdminController {
             description = "Aprova (ATIVO), Reprova (INATIVO) ou coloca em análise (PENDENTE). (RF-18, RF-20)"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Status atualizado com sucesso"),
+            @ApiResponse(responseCode = "204", description = "Status atualizado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Status inválido"),
             @ApiResponse(responseCode = "401", description = "Token JWT ausente ou inválido"),
             @ApiResponse(responseCode = "403", description = "Apenas ADMIN ou MODERADOR"),

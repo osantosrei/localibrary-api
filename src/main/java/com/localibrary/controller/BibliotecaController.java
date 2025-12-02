@@ -99,7 +99,7 @@ public class BibliotecaController {
             @ApiResponse(responseCode = "503", description = "Serviço de geolocalização indisponível")
     })
     @SecurityRequirement(name = "bearerAuth")
-    @PutMapping("/{id_biblioteca}")
+    @PutMapping("/{id_biblioteca}/profile")
     public ResponseEntity<BibliotecaDetalhesDTO> updateMyProfile(
             @PathVariable Long id_biblioteca,
             @Valid @RequestBody UpdateBibliotecaDTO dto
